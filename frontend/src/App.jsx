@@ -24,6 +24,8 @@ import Catalogo from './pages/publico/Catalogo';
 import DetalleEvento from './pages/publico/DetalleEvento';
 import Faq from './pages/publico/Faq';
 import Soporte from './pages/publico/Soporte';
+import Terminos from './pages/publico/Terminos';
+import Privacidad from './pages/publico/Privacidad';
 import SoporteAdmin from './pages/admin/SoporteAdmin';
 import ErrorInesperado from './pages/publico/ErrorInesperado';
 import NoEncontrada from './pages/publico/NoEncontrada';
@@ -64,6 +66,8 @@ const router = createBrowserRouter([
           { path: 'eventos/:id', element: <DetalleEvento /> },
           { path: 'ayuda/faq', element: <Faq /> },
           { path: 'ayuda/soporte', element: <Soporte /> },
+          { path: 'legal/terminos', element: <Terminos /> },
+          { path: 'legal/privacidad', element: <Privacidad /> },
           { path: '*', element: <NoEncontrada /> },
         ],
       },

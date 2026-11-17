@@ -44,7 +44,15 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       <footer className="border-t border-outline-variant px-margin-mobile py-4 text-center text-body-sm text-on-surface-variant md:px-margin-desktop">
-        SIGER · Sistema Inteligente de Gestión de Eventos y Reservaciones
+        <p>SIGER · Sistema Inteligente de Gestión de Eventos y Reservaciones</p>
+        <nav aria-label="Documentos legales" className="mt-2 flex justify-center gap-4">
+          <Link to="/legal/terminos" className="hover:text-primary hover:underline">
+            Términos y Condiciones
+          </Link>
+          <Link to="/legal/privacidad" className="hover:text-primary hover:underline">
+            Política de Privacidad
+          </Link>
+        </nav>
       </footer>
     </div>
   );

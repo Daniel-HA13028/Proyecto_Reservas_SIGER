@@ -19,7 +19,7 @@ management:
       show-details: always
 logging:
   level:
-    platform.siger: DEBUG
+    com.project.siger: DEBUG
 siger:
   # Clave solo para desarrollo; en prod es obligatoria SIGER_JWT_SECRETO (Base64, 32 bytes o más).
   jwt:

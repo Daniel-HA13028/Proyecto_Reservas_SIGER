@@ -130,7 +130,18 @@ export default function Registro() {
         <div>
           <label className="flex cursor-pointer items-start gap-2 px-1 text-body-sm text-on-surface-variant">
             <input type="checkbox" className="mt-0.5 h-4 w-4 rounded border-outline text-primary" checked={datos.aceptaTerminos} onChange={cambiar('aceptaTerminos')} />
-            Acepto los Términos y Condiciones y la Política de Privacidad.
+            <span>
+              {/* Se abren en otra pestaña para no perder lo escrito en el formulario. */}
+              Acepto los{' '}
+              <Link to="/legal/terminos" target="_blank" rel="noopener" className="font-semibold text-secondary hover:underline">
+                Términos y Condiciones
+              </Link>{' '}
+              y la{' '}
+              <Link to="/legal/privacidad" target="_blank" rel="noopener" className="font-semibold text-secondary hover:underline">
+                Política de Privacidad
+              </Link>
+              .
+            </span>
           </label>
           {errores.aceptaTerminos && <p className="ml-1 mt-1 text-body-sm text-error">{errores.aceptaTerminos}</p>}
         </div>

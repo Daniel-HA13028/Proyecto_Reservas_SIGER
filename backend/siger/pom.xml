@@ -249,7 +249,7 @@
                                 <rule>
                                     <element>CLASS</element>
                                     <includes>
-                                        <include>platform.siger.service.*Service</include>
+                                        <include>com.project.siger.service.*Service</include>
                                     </includes>
                                     <limits>
                                         <limit>
