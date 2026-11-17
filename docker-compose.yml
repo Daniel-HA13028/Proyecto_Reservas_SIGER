@@ -1,0 +1,70 @@
+# SIGER: servicios de apoyo para desarrollo
+# Levantar:  docker compose up -d      Detener: docker compose down
+# Borrar los datos (base de datos, pgAdmin y correos): docker compose down -v
+# Los valores se pueden cambiar en un archivo .env junto a este (ver .env.example).
+name: siger
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: siger-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-siger}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-siger_dev}
+      TZ: America/El_Salvador
+      PGTZ: America/El_Salvador
+    # 5433 en el equipo para no chocar con un PostgreSQL instalado localmente en 5432.
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    # Desde la imagen 18 el volumen se monta en /var/lib/postgresql (los datos quedan en 18/docker).
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s     # el primer arranque inicializa el clúster y puede tardar
+      start_interval: 2s
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: siger-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      # Modo escritorio: sin pantalla de inicio de sesión ni contraseña maestra (solo desarrollo).
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1
+    container_name: siger-mailpit
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: 1000
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      TZ: America/El_Salvador
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"   # SMTP que usa Spring Boot en el perfil dev
+      - "${MAILPIT_UI_PORT:-8025}:8025"     # bandeja web: http://localhost:8025
+    volumes:
+      - mailpit_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  mailpit_data:

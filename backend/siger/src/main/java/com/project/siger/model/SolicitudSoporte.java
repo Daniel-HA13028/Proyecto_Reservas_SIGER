@@ -1,3 +1,5 @@
+package com.project.siger.model;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,8 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import platform.siger.model.enums.EstadoSolicitudSoporte;
-import platform.siger.model.enums.TipoSolicitudSoporte;
+import com.project.siger.model.enums.EstadoSolicitudSoporte;
+import com.project.siger.model.enums.TipoSolicitudSoporte;
 
 @Entity
 @Table(name = "solicitudes_soporte")

@@ -94,7 +94,7 @@ Abre http://localhost:5173. Las llamadas a `/api` las reenvía Vite al backend e
 | Estado del backend | http://localhost:8080/actuator/health | — |
 | pgAdmin | http://localhost:5050 | servidor «SIGER (Docker)», contraseña `siger_dev` |
 | Correos enviados (Mailpit) | http://localhost:8025 | — |
-| PostgreSQL desde el equipo | `localhost:5433`, base `siger` | usuario `siger`, contraseña `siger_dev` |
+| PostgreSQL desde el equipo | `localhost:5433`, base `siger` | usuario `postgres`, contraseña `siger_dev` |
 
 Usuarios de la aplicación en desarrollo (los crean las migraciones y el arranque del backend; ver `database/README.md`):
 
@@ -153,7 +153,7 @@ Ramas, mensajes de commit y Pull Requests: ver [CONTRIBUTING.md](CONTRIBUTING.md
 | Síntoma | Solución |
 |---|---|
 | `docker compose up` dice que el puerto 5433, 5050, 1025 u 8025 está ocupado | Cambia el puerto en `.env` (por ejemplo `POSTGRES_PORT=5434`) y, si es el de PostgreSQL, indícalo al backend con `$env:DB_URL = "jdbc:postgresql://localhost:5434/siger"`. |
-| El backend no arranca: `Connection to localhost:5433 refused` | Docker Desktop no está abierto o no se levantaron los servicios: `docker compose up -d`. |
+| El backend no arranca: `Connection to localhost:5432 refused` | Docker Desktop no está abierto o no se levantaron los servicios: `docker compose up -d`. |
 | `.\mvnw` dice que la versión de Java no es válida | `java -version` debe mostrar 21 o superior; ajusta `$env:JAVA_HOME` (sección 1). |
 | `.\mvnw test` falla con `Could not find a valid Docker environment` o se agota el tiempo | Abre Docker Desktop y espera a que diga *Engine running*. En equipos con poca memoria, cierra otros programas: la base de pruebas tiene hasta 3 minutos para arrancar. |
 | `npm` dice que la ejecución de scripts está deshabilitada | Usa `npm.cmd install` y `npm.cmd run dev`, o permite scripts locales para tu usuario con `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |

@@ -1,17 +1,29 @@
-import org.springframework.boot.web.server.reactive.context.ReactiveWebServerApplicationContext;
+package com.project.siger.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import com.project.siger.model.enums.MetodoValidacion;
 
-@Entity 
-@Table (name ="asistencia")
-@NoArgsConstructor 
-@Getter 
-@Setter 
+
+@Entity
+@Table(name = "asistencias")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Asistencia {
 
     @Id
@@ -52,3 +64,4 @@ public class Asistencia {
         this.anuladaPor = responsable;
     }
 }
+

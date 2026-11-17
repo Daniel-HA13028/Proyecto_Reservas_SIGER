@@ -1,0 +1,165 @@
+@startuml SIGER_ERD
+' SIGER · Modelo físico · PostgreSQL 18 · T-01-01 · 02/10/2026
+!pragma layout smetana
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #00236F
+  HeaderBackgroundColor #00236F
+  HeaderFontColor #FFFFFF
+  ArrowColor #0058BE
+}
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #00236F
+  ArrowColor #0058BE
+}
+title SIGER · Diagrama entidad-relación físico (PostgreSQL 18)
+
+entity "usuarios" as usuarios #EEF2FC {
+  * <b>id_usuario</b> : BIGINT <<identity>> <<PK>>
+  --
+  * nombres : VARCHAR(100)
+  * apellidos : VARCHAR(100)
+  * correo_electronico : VARCHAR(150) <<UQ>>
+  * contrasena_hash : VARCHAR(255)
+    fecha_nacimiento : DATE
+  * rol : VARCHAR(20)
+  * estado_cuenta : VARCHAR(20)
+  * correo_verificado : BOOLEAN
+  * fecha_registro : TIMESTAMPTZ
+    ultimo_acceso : TIMESTAMPTZ
+}
+
+entity "categorias" as categorias #EEF2FC {
+  * <b>id_categoria</b> : SMALLINT <<identity>> <<PK>>
+  --
+  * nombre : VARCHAR(60) <<UQ>>
+  * activa : BOOLEAN
+  * fecha_creacion : TIMESTAMPTZ
+}
+
+entity "eventos" as eventos #EEF2FC {
+  * <b>id_evento</b> : BIGINT <<identity>> <<PK>>
+  --
+  * nombre_evento : VARCHAR(150)
+  * descripcion : TEXT
+  * id_categoria : SMALLINT <<FK>>
+  * fecha_hora_inicio : TIMESTAMPTZ
+  * fecha_hora_fin : TIMESTAMPTZ
+  * fecha_limite_reserva : TIMESTAMPTZ
+  * ubicacion : VARCHAR(200)
+  * cupo_maximo : INTEGER
+  * cupo_disponible : INTEGER
+  * max_acompanantes : SMALLINT
+  * precio : NUMERIC(10,2)
+    imagen_url : VARCHAR(300)
+  * requiere_qr : BOOLEAN
+  * estado_evento : VARCHAR(20)
+  * reprogramado : BOOLEAN
+    motivo_cancelacion : VARCHAR(300)
+  * id_organizador : BIGINT <<FK>>
+  * fecha_creacion : TIMESTAMPTZ
+  * fecha_actualizacion : TIMESTAMPTZ
+}
+
+entity "reservaciones" as reservaciones #EEF2FC {
+  * <b>id_reservacion</b> : BIGINT <<identity>> <<PK>>
+  --
+  * id_evento : BIGINT <<FK>>
+  * id_participante : BIGINT <<FK>>
+  * cantidad_acompanantes : SMALLINT
+    observaciones : VARCHAR(300)
+  * monto : NUMERIC(10,2)
+  * codigo_comprobante : VARCHAR(64) <<UQ>>
+  * estado_reservacion : VARCHAR(20)
+  * fecha_reservacion : TIMESTAMPTZ
+    fecha_cancelacion : TIMESTAMPTZ
+}
+
+entity "asistencias" as asistencias #EEF2FC {
+  * <b>id_asistencia</b> : BIGINT <<identity>> <<PK>>
+  --
+  * id_reservacion : BIGINT <<FK>>
+  * fecha_hora_validacion : TIMESTAMPTZ
+  * metodo_validacion : VARCHAR(30)
+  * id_registrado_por : BIGINT <<FK>>
+  * anulada : BOOLEAN
+    fecha_anulacion : TIMESTAMPTZ
+    id_anulada_por : BIGINT <<FK>>
+}
+
+entity "notificaciones" as notificaciones #EEF2FC {
+  * <b>id_notificacion</b> : BIGINT <<identity>> <<PK>>
+  --
+  * id_usuario : BIGINT <<FK>>
+    id_evento : BIGINT <<FK>>
+  * tipo_notificacion : VARCHAR(40)
+  * asunto : VARCHAR(150)
+  * mensaje_contenido : TEXT
+  * estado_envio : VARCHAR(15)
+  * intentos_envio : SMALLINT
+  * leida : BOOLEAN
+  * fecha_creacion : TIMESTAMPTZ
+    fecha_envio : TIMESTAMPTZ
+}
+
+entity "tokens_usuario" as tokens_usuario #EEF2FC {
+  * <b>id_token</b> : BIGINT <<identity>> <<PK>>
+  --
+  * id_usuario : BIGINT <<FK>>
+  * tipo : VARCHAR(30)
+  * token_hash : VARCHAR(255)
+  * fecha_expiracion : TIMESTAMPTZ
+  * usado : BOOLEAN
+  * intentos : SMALLINT
+  * fecha_creacion : TIMESTAMPTZ
+    correo_nuevo : VARCHAR(150)
+}
+
+entity "bitacora" as bitacora #EEF2FC {
+  * <b>id_bitacora</b> : BIGINT <<identity>> <<PK>>
+  --
+    id_usuario : BIGINT <<FK>>
+  * accion : VARCHAR(60)
+    entidad : VARCHAR(40)
+    id_entidad : BIGINT
+    detalle : JSONB
+    ip : VARCHAR(45)
+  * fecha : TIMESTAMPTZ
+}
+
+entity "solicitudes_soporte" as solicitudes_soporte #EEF2FC {
+  * <b>id_solicitud</b> : BIGINT <<identity>> <<PK>>
+  --
+    id_usuario : BIGINT <<FK>>
+  * correo_contacto : VARCHAR(150)
+  * tipo : VARCHAR(30)
+  * descripcion : TEXT
+  * estado : VARCHAR(20)
+  * fecha_creacion : TIMESTAMPTZ
+}
+
+eventos }o--|| categorias : id_categoria
+eventos }o--|| usuarios : id_organizador
+reservaciones }o--|| eventos : id_evento
+reservaciones }o--|| usuarios : id_participante
+asistencias }o--|| reservaciones : id_reservacion
+asistencias }o--|| usuarios : id_registrado_por
+notificaciones }o--|| usuarios : id_usuario
+notificaciones }o--o| eventos : id_evento
+tokens_usuario }o--|| usuarios : id_usuario
+bitacora }o--o| usuarios : id_usuario
+solicitudes_soporte }o--o| usuarios : id_usuario
+asistencias }o--o| usuarios : id_anulada_por
+
+legend right
+  * = NOT NULL · <<PK>> llave primaria · <<FK>> llave foránea · <<UQ>> única
+  Fuente: Diccionario_de_Datos_v2.xlsx · detalle en SIGER_esquema.sql
+endlegend
+@enduml

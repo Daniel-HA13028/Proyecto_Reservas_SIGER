@@ -1,0 +1,60 @@
+# Configuración común a todos los perfiles. Lo que cambia por entorno está en:
+#   application-dev.yml   desarrollo local con docker-compose.yml (perfil por defecto)
+#   application-prod.yml  servidor: todo sale de variables de entorno
+#   src/test/resources/application-test.yml  pruebas automáticas (Testcontainers)
+spring:
+  application:
+    name: siger
+  profiles:
+    default: dev
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  # mensajes de Bean Validation en español para todos los clientes.
+  web:
+    locale: es
+    locale-resolver: fixed
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway crea el esquema; Hibernate solo verifica que las entidades coincidan
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  mail:
+    default-encoding: UTF-8
+  # Imágenes de eventos: hasta 2 MB; la petición completa admite un poco más por los datos del formulario.
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+  # Sin el usuario «user» con contraseña generada de Spring Security; los usuarios vienen de la base de datos
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+server:
+  port: ${PORT:8080}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  default-produces-media-type: application/json
+  writer-with-order-by-keys: false
+siger:
+  imagenes:
+    # Carpeta donde se guardan las imágenes de los eventos (se sirven en /uploads/eventos/).
+    directorio: ${SIGER_IMAGENES_DIR:uploads}
+  jwt:
+    # Access token de 30 min (RNF-02); refresh de 1 día, o 30 días con «Recordarme» 
+    acceso: 30m
+    refresh: 1d
+    refresh-recordarme: 30d
+    gracia-reutilizacion: 30s
+  cors:
+    # Orígenes del frontend que pueden llamar a la API desde el navegador; cada perfil define los suyos.
+    origenes: []

@@ -1,3 +1,5 @@
+package com.project.siger.model;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import platform.siger.model.enums.EstadoEvento;
+import com.project.siger.model.enums.EstadoEvento;
 
 @Entity
 @Table(name = "eventos")
@@ -77,7 +79,7 @@ public class Evento {
     @Column(nullable = false)
     private boolean reprogramado;
 
-    /** Obligatorio cuando el evento se cancela (ck_eventos_motivo_cancelacion). */
+    /** Obligatorio cuando el evento se cancela */
     @Column(name = "motivo_cancelacion", length = 300)
     private String motivoCancelacion;
 

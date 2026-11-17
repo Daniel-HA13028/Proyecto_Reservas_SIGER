@@ -1,3 +1,5 @@
+package com.project.siger.model;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,8 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import platform.siger.model.enums.EstadoCuenta;
-import platform.siger.model.enums.Rol;
+import com.project.siger.model.enums.EstadoCuenta;
+import com.project.siger.model.enums.Rol;
 
 
 @Entity

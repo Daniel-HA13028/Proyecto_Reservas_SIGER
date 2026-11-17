@@ -1,0 +1,180 @@
+// SIGER · Modelo físico · PostgreSQL 18 · T-01-01 · 02/10/2026
+// Importar en https://dbdiagram.io (Import > DBML) o pegar en el editor.
+
+Project SIGER {
+  database_type: 'PostgreSQL'
+  Note: 'Sistema Inteligente de Gestión de Eventos y Reservaciones. Fuente: Diccionario_de_Datos_v2.xlsx.'
+}
+
+Table usuarios {
+  id_usuario BIGINT [pk, increment, note: 'Identificador único incremental de cada usuario.']
+  nombres VARCHAR(100) [not null, note: 'Nombres del usuario.']
+  apellidos VARCHAR(100) [not null, note: 'Apellidos del usuario.']
+  correo_electronico VARCHAR(150) [not null, unique, note: 'Correo único del usuario. Es la credencial de inicio de sesión y el destino de las notificaciones.']
+  contrasena_hash VARCHAR(255) [not null, note: 'Hash BCrypt (costo ≥ 10). La contraseña original tiene mínimo 8 caracteres con mayúscula, minúscula, número y símbolo (RNF-01).']
+  fecha_nacimiento DATE [note: 'Fecha de nacimiento capturada en el registro. Admite nulo para cuentas creadas por carga inicial.']
+  rol VARCHAR(20) [not null, note: 'Rol del usuario; define sus permisos (RNF-02). · CHECK: rol IN (\'Administrador\', \'Organizador\', \'Participante\')']
+  estado_cuenta VARCHAR(20) [not null, default: 'Activo', note: 'Estado de la cuenta. Un Organizador se registra como Pendiente hasta que un Administrador lo aprueba (RN-04); si lo rechaza, la cuenta pasa a Participante Activo (CU-11). Inactivo reemplaza al borrado físico (RN-15). Solo las cuentas Activas inician sesión (RN-13). · CHECK: estado_cuenta IN (\'Activo\', \'Inactivo\', \'Pendiente\')']
+  correo_verificado BOOLEAN [not null, default: false, note: 'Indica si el usuario verificó su correo con el enlace enviado al registrarse (RF-04).']
+  fecha_registro TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de creación de la cuenta.']
+  ultimo_acceso TIMESTAMPTZ [note: 'Fecha y hora del último inicio de sesión exitoso.']
+  indexes {
+    (rol, estado_cuenta) [name: 'ix_usuarios_rol_estado']
+  }
+  Note: 'Almacena la información de todas las personas registradas en el sistema (Administradores, Organizadores y Participantes). El correo electrónico identifica a cada cuenta y es la credencial de acceso junto con la contraseña; no existe nombre de usuario.'
+}
+
+Table categorias {
+  id_categoria SMALLINT [pk, increment, note: 'Identificador único de la categoría.']
+  nombre VARCHAR(60) [not null, unique, note: 'Nombre visible de la categoría.']
+  activa BOOLEAN [not null, default: true, note: 'Si es false, la categoría no aparece al crear eventos ni en los filtros; los eventos existentes la conservan (RF-26).']
+  fecha_creacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de creación de la categoría.']
+  Note: 'Catálogo de categorías para clasificar los eventos y filtrar el catálogo público. El Administrador las crea, edita, activa y desactiva desde su pantalla de categorías (RF-26); no se eliminan (RN-15). Valores iniciales cargados por migración: Tecnología, Negocios, Arte, Social, Conferencia y Taller.'
+}
+
+Table eventos {
+  id_evento BIGINT [pk, increment, note: 'Identificador único secuencial de cada evento.']
+  nombre_evento VARCHAR(150) [not null, note: 'Título del evento.']
+  descripcion TEXT [not null, note: 'Detalles, temario u objetivos del evento.']
+  id_categoria SMALLINT [not null, note: 'Relación con categorias(id_categoria).']
+  fecha_hora_inicio TIMESTAMPTZ [not null, note: 'Fecha y hora de inicio (RN-06; la validación contra la fecha actual la hace el servicio).']
+  fecha_hora_fin TIMESTAMPTZ [not null, note: 'Fecha y hora de finalización. Al llegar, el evento pasa a Finalizado (RN-14). · CHECK: fecha_hora_fin > fecha_hora_inicio']
+  fecha_limite_reserva TIMESTAMPTZ [not null, note: 'Último momento en que se aceptan reservaciones (RN-08). Por defecto igual al inicio. · CHECK: fecha_limite_reserva <= fecha_hora_inicio']
+  ubicacion VARCHAR(200) [not null, note: 'Lugar físico o enlace de la plataforma virtual.']
+  cupo_maximo INTEGER [not null, note: 'Capacidad máxima del evento (RN-06). No puede reducirse por debajo de los cupos reservados (RN-10). · CHECK: cupo_maximo > 0']
+  cupo_disponible INTEGER [not null, note: 'Cupos libres. Se descuenta en la misma transacción que crea la reservación (1 + acompañantes) y se devuelve al cancelarla (RN-01). · CHECK: cupo_disponible BETWEEN 0 AND cupo_maximo']
+  max_acompanantes SMALLINT [not null, default: 0, note: 'Máximo de acompañantes permitidos por reservación. · CHECK: max_acompanantes >= 0']
+  precio NUMERIC(10,2) [not null, default: 0, note: 'Precio por persona en US$. 0 = evento gratuito. El pago es simulado (RN-12). · CHECK: precio >= 0']
+  imagen_url VARCHAR(300) [note: 'Ruta de la imagen promocional.']
+  requiere_qr BOOLEAN [not null, default: true, note: 'Habilita el control de asistencia por QR. El QR es por reservación, no por evento.']
+  estado_evento VARCHAR(20) [not null, default: 'Borrador', note: 'Estado del evento según el Manual de Usuario 5.7. Borrador, Cancelado y Finalizado no aceptan reservaciones (RN-08). · CHECK: estado_evento IN (\'Borrador\', \'Publicado\', \'Cancelado\', \'Finalizado\')']
+  reprogramado BOOLEAN [not null, default: false, note: 'Se marca cuando cambia la fecha, la hora o la ubicación de un evento publicado; dispara la notificación a los participantes (RN-11).']
+  motivo_cancelacion VARCHAR(300) [note: 'Motivo que se envía a los participantes al cancelar el evento. · CHECK: estado_evento <> \'Cancelado\' OR motivo_cancelacion IS NOT NULL']
+  id_organizador BIGINT [not null, note: 'Relación con usuarios(id_usuario). Organizador responsable del evento (RN-03).']
+  fecha_creacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de creación del registro.']
+  fecha_actualizacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de la última modificación.']
+  indexes {
+    (estado_evento, fecha_hora_inicio) [name: 'ix_eventos_estado_inicio']
+    (id_categoria) [name: 'ix_eventos_categoria']
+    (id_organizador) [name: 'ix_eventos_organizador']
+    (nombre_evento, ubicacion) [name: 'ix_eventos_busqueda_trgm', note: 'Índice GIN con pg_trgm (gin_trgm_ops) para la búsqueda de texto; DBML no admite el tipo gin, ver SIGER_esquema.sql']
+  }
+  Note: 'Registra los eventos académicos, empresariales, culturales o sociales creados en la plataforma. Los estados siguen el Manual de Usuario 5.7. "Lleno" no se almacena: se calcula cuando cupo_disponible = 0.'
+}
+
+Table reservaciones {
+  id_reservacion BIGINT [pk, increment, note: 'Identificador único de la reservación.']
+  id_evento BIGINT [not null, note: 'Relación con eventos(id_evento).']
+  id_participante BIGINT [not null, note: 'Relación con usuarios(id_usuario). Un participante tiene como máximo una reservación Confirmada por evento (RN-02).']
+  cantidad_acompanantes SMALLINT [not null, default: 0, note: 'Acompañantes incluidos; no supera eventos.max_acompanantes (validación del servicio). · CHECK: cantidad_acompanantes >= 0']
+  observaciones VARCHAR(300) [note: 'Notas o requerimientos especiales del participante.']
+  monto NUMERIC(10,2) [not null, default: 0, note: 'precio × (1 + acompañantes). Pago simulado (RN-12); base de los ingresos simulados en reportes. · CHECK: monto >= 0']
+  codigo_comprobante VARCHAR(64) [not null, unique, note: 'Código del comprobante; es el contenido del QR, único por reservación.']
+  estado_reservacion VARCHAR(20) [not null, default: 'Confirmada', note: 'Estado de la reservación. Se cancela con al menos 24 h de anticipación (RN-07). · CHECK: estado_reservacion IN (\'Confirmada\', \'Cancelada\')']
+  fecha_reservacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de la reservación; anterior a la fecha límite del evento (RN-08).']
+  fecha_cancelacion TIMESTAMPTZ [note: 'Fecha y hora en que se canceló la reservación. · CHECK: estado_reservacion <> \'Cancelada\' OR fecha_cancelacion IS NOT NULL']
+  indexes {
+    (id_evento, id_participante) [name: 'uq_reservaciones_confirmada', unique, note: 'Índice parcial: WHERE estado_reservacion = \'Confirmada\'']
+    (id_participante) [name: 'ix_reservaciones_participante']
+    (id_evento, estado_reservacion) [name: 'ix_reservaciones_evento_estado']
+  }
+  Note: 'Registra los cupos asegurados por los participantes en los eventos. No se elimina ninguna reservación: al cancelarse cambia de estado y conserva su fecha de cancelación (RN-15).'
+}
+
+Table asistencias {
+  id_asistencia BIGINT [pk, increment, note: 'Identificador único del registro de asistencia.']
+  id_reservacion BIGINT [not null, note: 'Relación con reservaciones(id_reservacion). Una reservación tiene como máximo una asistencia vigente (RN-09); si se deshace, puede registrarse de nuevo.']
+  fecha_hora_validacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora exacta de la validación.']
+  metodo_validacion VARCHAR(30) [not null, note: 'Cómo se validó: cámara, marcado manual en la lista o código escrito. · CHECK: metodo_validacion IN (\'QR_Scanner\', \'Manual_Organizador\', \'Digital_Code\')']
+  id_registrado_por BIGINT [not null, note: 'Relación con usuarios(id_usuario). Organizador del evento o Administrador que registró la asistencia.']
+  anulada BOOLEAN [not null, default: false, note: 'Se marca al deshacer la asistencia el mismo día del evento; el registro se conserva (RN-15).']
+  fecha_anulacion TIMESTAMPTZ [note: 'Fecha y hora en que se deshizo la asistencia.']
+  id_anulada_por BIGINT [note: 'Relación con usuarios(id_usuario). Organizador del evento o Administrador que deshizo la asistencia.']
+  indexes {
+    (id_reservacion) [name: 'uq_asistencias_reservacion_vigente', unique, note: 'Índice parcial: WHERE anulada = false']
+    (fecha_hora_validacion) [name: 'ix_asistencias_fecha']
+    (id_registrado_por) [name: 'ix_asistencias_registrado_por']
+    (id_anulada_por) [name: 'ix_asistencias_anulada_por']
+  }
+  Note: 'Registra la validación del ingreso de los participantes a los eventos, por QR o de forma manual. Cada reservación tiene como máximo una asistencia (RN-09). Deshacer una asistencia la marca como anulada; el registro no se elimina (RN-15).'
+}
+
+Table notificaciones {
+  id_notificacion BIGINT [pk, increment, note: 'Identificador único de la notificación.']
+  id_usuario BIGINT [not null, note: 'Relación con usuarios(id_usuario). Destinatario.']
+  id_evento BIGINT [note: 'Relación opcional con eventos(id_evento) para notificaciones de un evento.']
+  tipo_notificacion VARCHAR(40) [not null, note: 'Motivo de la notificación: bienvenida, verificación, recuperación, aprobación o rechazo de organizador, confirmación o cancelación de reserva, cambio o cancelación de evento, recordatorio. · CHECK: tipo_notificacion IN (\'Bienvenida\', \'Verificacion_Correo\', \'Recuperacion_Contrasena\', \'Aprobacion_Organizador\', \'Rechazo_Organizador\', \'Confirmacion_Reserva\', \'Cancelacion_Reserva\', \'Cambio_Evento\', \'Cancelacion_Evento\', \'Recordatorio\')']
+  asunto VARCHAR(150) [not null, note: 'Asunto del correo.']
+  mensaje_contenido TEXT [not null, note: 'Cuerpo completo de la notificación.']
+  estado_envio VARCHAR(15) [not null, default: 'Pendiente', note: 'Estado del envío del correo. · CHECK: estado_envio IN (\'Pendiente\', \'Enviado\', \'Fallido\')']
+  intentos_envio SMALLINT [not null, default: 0, note: 'Número de intentos de envío; los fallidos se reintentan automáticamente.']
+  leida BOOLEAN [not null, default: false, note: 'Si el usuario la marcó como leída en el centro de notificaciones (RF-21).']
+  fecha_creacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora en que se generó la notificación.']
+  fecha_envio TIMESTAMPTZ [note: 'Fecha y hora del envío exitoso; nulo mientras esté pendiente.']
+  indexes {
+    (id_usuario, leida) [name: 'ix_notificaciones_usuario_leida']
+    (estado_envio, fecha_creacion) [name: 'ix_notificaciones_cola']
+    (id_evento) [name: 'ix_notificaciones_evento']
+  }
+  Note: 'Cola y registro histórico de las comunicaciones enviadas a los usuarios. Las notificaciones se crean como Pendiente y un proceso las envía y reintenta, de modo que un fallo del correo no revierte la operación que las originó.'
+}
+
+Table tokens_usuario {
+  id_token BIGINT [pk, increment, note: 'Identificador único del token.']
+  id_usuario BIGINT [not null, note: 'Relación con usuarios(id_usuario).']
+  tipo VARCHAR(30) [not null, note: 'Propósito del token. Cambio_Correo confirma el nuevo correo del perfil antes de reemplazar al actual. · CHECK: tipo IN (\'Verificacion_Correo\', \'Recuperacion_Contrasena\', \'Refresh\', \'Cambio_Correo\')']
+  token_hash VARCHAR(255) [not null, note: 'Hash del token o del código.']
+  fecha_expiracion TIMESTAMPTZ [not null, note: 'Vencimiento: 15 minutos para el código de recuperación.']
+  usado BOOLEAN [not null, default: false, note: 'Un token solo puede usarse una vez.']
+  intentos SMALLINT [not null, default: 0, note: 'Intentos fallidos; al quinto se invalida el código. · CHECK: intentos BETWEEN 0 AND 5']
+  fecha_creacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de emisión.']
+  correo_nuevo VARCHAR(150) [note: 'Correo que reemplazará al actual cuando el usuario use el enlace de verificación (RF-07). Se vuelve a comprobar que no esté registrado al confirmar. · CHECK: tipo <> \'Cambio_Correo\' OR correo_nuevo IS NOT NULL']
+  indexes {
+    (id_usuario, tipo, usado) [name: 'ix_tokens_usuario_tipo_usado']
+  }
+  Note: 'Guarda, cifrados, los códigos y tokens temporales: verificación de correo, recuperación de contraseña (código de 6 dígitos) y renovación de sesión. También guarda el correo nuevo mientras el usuario confirma un cambio de correo (RF-07).'
+}
+
+Table bitacora {
+  id_bitacora BIGINT [pk, increment, note: 'Identificador único del registro.']
+  id_usuario BIGINT [note: 'Relación con usuarios(id_usuario). Usuario que realizó la acción; nulo para acciones del sistema.']
+  accion VARCHAR(60) [not null, note: 'Acción realizada, por ejemplo LOGIN, CAMBIO_ROL, CAMBIO_ESTADO_CUENTA, CANCELACION_EVENTO.']
+  entidad VARCHAR(40) [note: 'Tabla afectada.']
+  id_entidad BIGINT [note: 'Identificador del registro afectado.']
+  detalle JSONB [note: 'Datos adicionales de la acción (valores anterior y nuevo).']
+  ip VARCHAR(45) [note: 'Dirección IP del cliente (IPv4 o IPv6).']
+  fecha TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora de la acción.']
+  indexes {
+    (fecha) [name: 'ix_bitacora_fecha']
+    (id_usuario) [name: 'ix_bitacora_usuario']
+  }
+  Note: 'Registro de auditoría de acciones sensibles: inicios de sesión, cambios de rol y de estado de cuentas, cancelaciones y deshacer asistencias. También alimenta la actividad reciente del dashboard del Administrador.'
+}
+
+Table solicitudes_soporte {
+  id_solicitud BIGINT [pk, increment, note: 'Identificador único de la solicitud.']
+  id_usuario BIGINT [note: 'Relación con usuarios(id_usuario); nulo si quien reporta no inició sesión.']
+  correo_contacto VARCHAR(150) [not null, note: 'Correo al que se responde la solicitud.']
+  tipo VARCHAR(30) [not null, note: 'Tipo de solicitud. · CHECK: tipo IN (\'Incidente\', \'Solicitud_Cambio\', \'Consulta\', \'Acceso\')']
+  descripcion TEXT [not null, note: 'Descripción del problema.']
+  estado VARCHAR(20) [not null, default: 'Abierta', note: 'Estado de atención. · CHECK: estado IN (\'Abierta\', \'En_Proceso\', \'Cerrada\')']
+  fecha_creacion TIMESTAMPTZ [not null, default: `now()`, note: 'Fecha y hora del reporte.']
+  indexes {
+    (estado, fecha_creacion) [name: 'ix_solicitudes_estado_fecha']
+    (id_usuario) [name: 'ix_solicitudes_usuario']
+  }
+  Note: 'Registra los problemas reportados desde la página de Soporte técnico para que los atiendan los administradores. Tipos según la sección 8 del Manual de Usuario.'
+}
+
+Ref fk_eventos_id_categoria: eventos.id_categoria > categorias.id_categoria [delete: restrict]
+Ref fk_eventos_id_organizador: eventos.id_organizador > usuarios.id_usuario [delete: restrict]
+Ref fk_reservaciones_id_evento: reservaciones.id_evento > eventos.id_evento [delete: restrict]
+Ref fk_reservaciones_id_participante: reservaciones.id_participante > usuarios.id_usuario [delete: restrict]
+Ref fk_asistencias_id_reservacion: asistencias.id_reservacion > reservaciones.id_reservacion [delete: restrict]
+Ref fk_asistencias_id_registrado_por: asistencias.id_registrado_por > usuarios.id_usuario [delete: restrict]
+Ref fk_notificaciones_id_usuario: notificaciones.id_usuario > usuarios.id_usuario [delete: restrict]
+Ref fk_notificaciones_id_evento: notificaciones.id_evento > eventos.id_evento [delete: set null]
+Ref fk_tokens_usuario_id_usuario: tokens_usuario.id_usuario > usuarios.id_usuario [delete: cascade]
+Ref fk_bitacora_id_usuario: bitacora.id_usuario > usuarios.id_usuario [delete: restrict]
+Ref fk_solicitudes_soporte_id_usuario: solicitudes_soporte.id_usuario > usuarios.id_usuario [delete: set null]
+Ref fk_asistencias_id_anulada_por: asistencias.id_anulada_por > usuarios.id_usuario [delete: restrict]

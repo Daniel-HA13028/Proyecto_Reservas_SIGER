@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head><meta charset="UTF-8"><title th:text="${asunto}">SIGER</title></head>
+<body style="margin:0;padding:24px;background:#f9f9ff;">
+<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #c5c5d3;border-radius:12px;">
+  <div th:replace="~{correo/fragmentos :: encabezado}"></div>
+  <div style="padding:24px;font-family:Arial,sans-serif;font-size:15px;line-height:22px;color:#151c27;">
+    <p>Hola, <strong th:text="${nombre}">usuario</strong>:</p>
+    <p>Tu solicitud de cuenta de Organizador no fue aprobada. Tu cuenta quedó activa como <strong>Participante</strong>, así que puedes iniciar sesión y reservar eventos.</p>
+    <p th:if="${motivo}">Motivo: <em th:text="${motivo}">motivo</em></p>
+    <p style="text-align:center;margin:28px 0;">
+      <a th:href="@{|${frontendUrl}/login|}" style="background:#00236f;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block;">Iniciar sesión</a>
+    </p>
+  </div>
+  <div th:replace="~{correo/fragmentos :: pie}"></div>
+</div>
+</body>
+</html>

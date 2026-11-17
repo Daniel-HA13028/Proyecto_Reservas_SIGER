@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body>
+<!-- Encabezado y pie comunes de los correos de SIGER (T-04-07). Estilos en línea porque los clientes de correo ignoran las hojas de estilo. -->
+<div th:fragment="encabezado" style="background:#00236f;padding:20px 24px;border-radius:12px 12px 0 0;">
+  <span style="font-family:Arial,sans-serif;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">SIGER</span>
+  <span style="font-family:Arial,sans-serif;font-size:12px;color:#b6c4ff;margin-left:8px;">Sistema Inteligente de Gestión de Eventos y Reservaciones</span>
+</div>
+<div th:fragment="pie" style="padding:16px 24px;font-family:Arial,sans-serif;font-size:12px;color:#757682;border-top:1px solid #c5c5d3;">
+  Recibiste este correo porque tienes una cuenta en SIGER. Si no reconoces esta acción, ignóralo o escríbenos desde
+  <a th:href="@{|${frontendUrl}/ayuda/soporte|}" style="color:#0058be;">Soporte técnico</a>.
+</div>
+</body>
+</html>

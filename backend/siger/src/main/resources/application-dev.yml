@@ -1,0 +1,37 @@
+# Perfil dev (por defecto): servicios de docker-compose.yml en este equipo.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/siger}
+    username: ${DB_USUARIO:postgres}
+    password: ${DB_CONTRASENA:manolo01}
+  flyway:
+    # db/demo trae los datos de demostración; solo se cargan en desarrollo.
+    locations: classpath:db/migration, classpath:db/demo
+    # V100__datos_demo ya aplicada no debe impedir aplicar después V4, V5… (solo en desarrollo).
+    out-of-order: true
+  mail:
+    # Mailpit: recibe todos los correos y los muestra en http://localhost:8025
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+management:
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    platform.siger: DEBUG
+siger:
+  # Clave solo para desarrollo; en prod es obligatoria SIGER_JWT_SECRETO (Base64, 32 bytes o más).
+  jwt:
+    secreto: ${SIGER_JWT_SECRETO:0O5SWGM5OEb0QcO6fhxqESIAAmQVpLqec7ImVGVQSSMKFlfcMxuqC2hqbt9MTz00}
+  correo:
+    remitente: SIGER <no-responder@siger.test>
+    frontend-url: http://localhost:5173
+  # Administrador inicial de desarrollo (DataInitializer). En prod: SIGER_ADMIN_CORREO y SIGER_ADMIN_CONTRASENA.
+  admin:
+    correo: ${SIGER_ADMIN_CORREO:admin@siger.test}
+    contrasena: ${SIGER_ADMIN_CONTRASENA:Admin#2026}
+  cors:
+    origenes:
+      - http://localhost:5173
+      - http://127.0.0.1:5173

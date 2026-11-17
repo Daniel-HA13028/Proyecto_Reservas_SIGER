@@ -1,3 +1,4 @@
+package com.project.siger.model.enums;
 
 public enum TipoNotificacion {
     Bienvenida,

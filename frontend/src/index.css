@@ -1,0 +1,29 @@
+/* SIGER · Estilos base (T-01-05). Se importa una sola vez en src/main.jsx. */
+@import '@fontsource-variable/inter';
+@import 'material-symbols/outlined.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-body-base text-on-surface antialiased;
+  }
+
+  /* Foco visible en todos los controles (DESIGN.md: borde azul secundario con halo de 2 px). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-secondary/40 ring-offset-1;
+  }
+}
+
+@layer components {
+  /* Íconos Material Symbols (los mismos de los prototipos), 24 px y sin relleno por defecto. */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}

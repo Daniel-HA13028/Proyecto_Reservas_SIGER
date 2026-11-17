@@ -1,3 +1,5 @@
+package com.project.siger.model;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import platform.siger.model.enums.TipoToken;
+import com.project.siger.model.enums.TipoToken;
 
 
 @Entity
@@ -46,7 +48,7 @@ public class TokenUsuario {
     @Column(nullable = false)
     private boolean usado;
 
-    /** Intentos fallidos del código de recuperación (máximo 5, ck_tokens_usuario_intentos). */
+    /** Intentos fallidos del código de recuperación (máximo 5, ck_tokens_usuario_intentos) */
     @Column(nullable = false)
     private Short intentos = 0;
 
@@ -54,7 +56,7 @@ public class TokenUsuario {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
-    /** Correo por confirmar; obligatorio y en minúsculas para el tipo Cambio_Correo (RF-07). */
+    /** Correo por confirmar; obligatorio y en minúsculas para el tipo Cambio_Correo */
     @Column(name = "correo_nuevo", length = 150)
     private String correoNuevo;
 }

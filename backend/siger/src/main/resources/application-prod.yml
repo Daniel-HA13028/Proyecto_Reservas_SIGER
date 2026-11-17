@@ -1,0 +1,41 @@
+# Perfil prod (SPRING_PROFILES_ACTIVE=prod). Los datos sensibles no tienen valor por defecto:
+# si falta una variable, la aplicación no arranca en lugar de usar una credencial de desarrollo.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USUARIO}
+    password: ${DB_CONTRASENA}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USUARIO}
+    password: ${MAIL_CONTRASENA}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+server:
+  # Detrás de Nginx con HTTPS: respeta X-Forwarded-Proto y X-Forwarded-For.
+  forward-headers-strategy: framework
+management:
+  endpoint:
+    health:
+      show-details: never
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+siger:
+  jwt:
+    secreto: ${SIGER_JWT_SECRETO}
+  correo:
+    remitente: ${SIGER_CORREO_REMITENTE}
+    frontend-url: ${SIGER_FRONTEND_URL}
+  # Solo se usan si la base no tiene ningún Administrador (primer arranque).
+  admin:
+    correo: ${SIGER_ADMIN_CORREO:}
+    contrasena: ${SIGER_ADMIN_CONTRASENA:}
+  cors:
+    # La SPA y la API comparten dominio en el VPS, así que no hace falta CORS; se puede abrir con una lista separada por comas.
+    origenes: ${SIGER_CORS_ORIGENES:}

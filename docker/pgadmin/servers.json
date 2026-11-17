@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "SIGER (Docker)",
+      "Group": "SIGER",
+      "Host": "postgres",
+      "Port": 5433,
+      "MaintenanceDB": "siger",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "Comment": "Contenedor siger-postgres de docker-compose.yml. La contraseña es POSTGRES_PASSWORD (siger_dev si no se cambió)."
+    }
+  }
+}

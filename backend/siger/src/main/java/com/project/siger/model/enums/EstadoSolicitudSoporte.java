@@ -1,3 +1,5 @@
+package com.project.siger.model.enums;
+
 public enum EstadoSolicitudSoporte {
 
     Abierta,
