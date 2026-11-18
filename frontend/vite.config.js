@@ -9,9 +9,9 @@ export default defineConfig(({ mode }) => {
     // Las páginas diferidas usan estas librerías; Vite las prepara al arrancar para no recargar a mitad de la sesión.
     optimizeDeps: { include: ['recharts', 'html5-qrcode'] },
     server: {
-      // El backend permite CORS desde este puerto (application-dev.yml); si está ocupado, Vite falla en vez de cambiarlo.
-      port: 5173,
-      strictPort: true,
+      host: '0.0.0.0',
+      port: 3000,
+      allowedHosts: true,
       // En desarrollo el navegador llama a /api en el mismo origen y Vite lo reenvía al backend.
       proxy: {
         '/api': { target: env.VITE_BACKEND_URL || 'http://localhost:8080', changeOrigin: true },
