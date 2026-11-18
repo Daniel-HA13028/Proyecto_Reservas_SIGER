@@ -1,0 +1,26 @@
+# Perfil gmail: envía los correos reales por el SMTP de Gmail en lugar de Mailpit.
+# Se combina con otro perfil: dev,gmail (en este equipo) o prod,gmail (en el servidor).
+# Requiere una contraseña de aplicación de Google (no la contraseña normal), en variables de entorno:
+#   GMAIL_USUARIO     cuenta de Gmail que envía, por ejemplo soporte.siger@gmail.com
+#   GMAIL_CONTRASENA  contraseña de aplicación de 16 caracteres, sin espacios
+#   SIGER_SOPORTE_CORREO (opcional) buzón que recibe las solicitudes de soporte; por defecto, la misma cuenta
+# Ver backend/siger/iniciar-gmail.ps1 y gmail.env.example.
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USUARIO}
+    password: ${GMAIL_CONTRASENA}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+siger:
+  correo:
+    # Gmail siempre envía como la cuenta autenticada, así que el remitente debe ser esa misma cuenta.
+    remitente: SIGER <${GMAIL_USUARIO}>
+  soporte:
+    correo: ${SIGER_SOPORTE_CORREO:${GMAIL_USUARIO}}

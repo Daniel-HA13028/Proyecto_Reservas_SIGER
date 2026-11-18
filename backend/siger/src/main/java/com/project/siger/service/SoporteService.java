@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -11,12 +12,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.siger.dto.request.CrearSolicitudSoporteRequest;
+import com.project.siger.dto.request.ResponderSolicitudRequest;
 import com.project.siger.dto.response.PageResponse;
 import com.project.siger.dto.response.SolicitudSoporteResponse;
 import com.project.siger.exception.CodigoError;
 import com.project.siger.exception.NegocioException;
 import com.project.siger.exception.RecursoNoEncontradoException;
 import com.project.siger.model.SolicitudSoporte;
+import com.project.siger.model.Usuario;
 import com.project.siger.model.enums.EstadoSolicitudSoporte;
 import com.project.siger.model.enums.TipoSolicitudSoporte;
 import com.project.siger.repository.SolicitudSoporteRepository;
@@ -36,13 +39,15 @@ public class SoporteService {
     private final UsuarioRepository usuarios;
     private final LimitadorSolicitudes limitador;
     private final BitacoraService bitacora;
+    private final ApplicationEventPublisher eventos;
 
     public SoporteService(SolicitudSoporteRepository solicitudes, UsuarioRepository usuarios, LimitadorSolicitudes limitador,
-            BitacoraService bitacora) {
+            BitacoraService bitacora, ApplicationEventPublisher eventos) {
         this.solicitudes = solicitudes;
         this.usuarios = usuarios;
         this.limitador = limitador;
         this.bitacora = bitacora;
+        this.eventos = eventos;
     }
 
     @Transactional
@@ -52,13 +57,19 @@ public class SoporteService {
             throw new NegocioException(CodigoError.DEMASIADAS_SOLICITUDES);
         }
         SolicitudSoporte s = new SolicitudSoporte();
+        String nombre = null;
         if (idUsuario != null) {
-            s.setUsuario(usuarios.getReferenceById(idUsuario));
+            Usuario u = usuarios.findById(idUsuario).orElseThrow(() -> new RecursoNoEncontradoException("Usuario", idUsuario));
+            s.setUsuario(u);
+            nombre = u.getNombres() + " " + u.getApellidos() + " (" + u.getCorreoElectronico() + ")";
         }
         s.setCorreoContacto(correo);
         s.setTipo(datos.tipo());
         s.setDescripcion(datos.descripcion().trim());
-        return respuesta(solicitudes.saveAndFlush(s));
+        SolicitudSoporteResponse creada = respuesta(solicitudes.saveAndFlush(s));
+        // Aviso al buzón de soporte y acuse a quien la reportó, solo si la transacción se confirma.
+        eventos.publishEvent(new SoporteCorreosListener.SolicitudCreada(creada, nombre));
+        return creada;
     }
 
     /** Solicitudes de la más reciente a la más antigua, con filtros de estado y tipo. */
@@ -97,7 +108,32 @@ public class SoporteService {
         s.setEstado(nuevo);
         bitacora.registrar(usuarios.getReferenceById(idAdmin), "CAMBIO_ESTADO_SOPORTE", "solicitudes_soporte", s.getId(),
                 Map.of("anterior", anterior.name(), "nuevo", nuevo.name()));
-        return respuesta(solicitudes.saveAndFlush(s));
+        SolicitudSoporteResponse actualizada = respuesta(solicitudes.saveAndFlush(s));
+        if (nuevo != anterior) {
+            eventos.publishEvent(new SoporteCorreosListener.EstadoCambiado(actualizada));
+        }
+        return actualizada;
+    }
+
+    /**
+     * Respuesta del administrador: se envía por correo a quien reportó el problema (plantilla soporte_respuesta, firmada
+     * por el Equipo Soporte SIGER) y la solicitud pasa a En_Proceso, o a Cerrada si «cerrar». El texto queda en la bitácora.
+     */
+    @Transactional
+    public SolicitudSoporteResponse responder(Long idAdmin, Long id, ResponderSolicitudRequest datos) {
+        SolicitudSoporte s = solicitudes.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Solicitud", id));
+        if (s.getEstado() == EstadoSolicitudSoporte.Cerrada) {
+            throw new NegocioException(CodigoError.SOLICITUD_CERRADA);
+        }
+        String mensaje = datos.mensaje().strip();
+        EstadoSolicitudSoporte anterior = s.getEstado();
+        s.setEstado(datos.cerrar() ? EstadoSolicitudSoporte.Cerrada : EstadoSolicitudSoporte.En_Proceso);
+        bitacora.registrar(usuarios.getReferenceById(idAdmin), "RESPUESTA_SOPORTE", "solicitudes_soporte", s.getId(),
+                Map.of("anterior", anterior.name(), "nuevo", s.getEstado().name(), "mensaje", mensaje));
+        SolicitudSoporteResponse actualizada = respuesta(solicitudes.saveAndFlush(s));
+        // Un solo correo: la respuesta ya informa el nuevo estado, así que no se envía también el aviso de cambio de estado.
+        eventos.publishEvent(new SoporteCorreosListener.RespuestaEnviada(actualizada, mensaje));
+        return actualizada;
     }
 
     private static SolicitudSoporteResponse respuesta(SolicitudSoporte s) {

@@ -28,7 +28,7 @@ import com.project.siger.service.UsuarioDetailsServiceImpl;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties({CorsProperties.class, CorreoProperties.class})
+@EnableConfigurationProperties({CorsProperties.class, CorreoProperties.class, SoporteProperties.class})
 public class SecurityConfig {
 
     /** Rutas públicas del contrato (T-01-02): las marcadas «Público», más la renovación de tokens. */

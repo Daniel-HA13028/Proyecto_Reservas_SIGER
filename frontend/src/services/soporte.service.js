@@ -7,6 +7,8 @@ export const soporteService = {
   crear: (datos) => api.post('/soporte/tickets', datos).then((r) => r.data),
   listar: (filtros) => api.get('/soporte/tickets', { params: sinVacios(filtros) }).then((r) => r.data),
   cambiarEstado: (id, estado) => api.patch(`/soporte/tickets/${id}/estado`, { estado }).then((r) => r.data),
+  // Envía la respuesta por correo (plantilla «Equipo Soporte SIGER») y deja la solicitud En proceso, o Cerrada si cerrar.
+  responder: (id, mensaje, cerrar) => api.post(`/soporte/tickets/${id}/respuestas`, { mensaje, cerrar }).then((r) => r.data),
 };
 
 export const TIPOS_SOPORTE = [

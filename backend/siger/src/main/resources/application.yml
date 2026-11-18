@@ -58,3 +58,6 @@ siger:
   cors:
     # Orígenes del frontend que pueden llamar a la API desde el navegador; cada perfil define los suyos.
     origenes: []
+  # Buzón que recibe los avisos de solicitudes de soporte nuevas (por ejemplo, una cuenta de Gmail). Vacío: no se envían.
+  soporte:
+    correo: ${SIGER_SOPORTE_CORREO:}

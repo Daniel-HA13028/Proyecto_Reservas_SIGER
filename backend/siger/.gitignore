@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Credenciales locales de Gmail (ver gmail.env.example) ###
+gmail.env

@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.project.siger.dto.request.CambiarEstadoSolicitudRequest;
+import com.project.siger.dto.request.ResponderSolicitudRequest;
 import com.project.siger.dto.request.CrearSolicitudSoporteRequest;
 import com.project.siger.dto.response.PageResponse;
 import com.project.siger.dto.response.SolicitudSoporteResponse;
@@ -81,5 +82,19 @@ public class SoporteController {
             @Valid @RequestBody CambiarEstadoSolicitudRequest solicitud
     ) {
         return ResponseEntity.ok(soporteService.cambiarEstado(yo.id(), id, solicitud.estado()));
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/{id}/respuestas")
+    @Operation(summary = "Responder por correo",
+            description = "Administrador. Envía la respuesta al correo de contacto con la plantilla «Equipo Soporte SIGER» y deja la "
+                    + "solicitud En_Proceso, o Cerrada si cerrar es true.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<SolicitudSoporteResponse> responder(
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado yo,
+            @PathVariable Long id,
+            @Valid @RequestBody ResponderSolicitudRequest respuesta
+    ) {
+        return ResponseEntity.ok(soporteService.responder(yo.id(), id, respuesta));
     }
 }

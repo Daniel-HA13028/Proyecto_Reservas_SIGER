@@ -131,6 +131,17 @@ Las pruebas del backend crean su propia base PostgreSQL 18 temporal; no tocan lo
 | `dev` | por defecto | `application-dev.yml`: base `localhost:5433`, correo a Mailpit, datos demo, CORS para `localhost:5173` |
 | `test` | pruebas automáticas | `src/test/resources/application-test.yml` y Testcontainers |
 | `prod` | servidor (`$env:SPRING_PROFILES_ACTIVE = "prod"`) | `application-prod.yml`: todo desde variables de entorno (`DB_URL`, `DB_USUARIO`, `DB_CONTRASENA`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USUARIO`, `MAIL_CONTRASENA`, `SIGER_CORS_ORIGENES`); Swagger desactivado |
+| `gmail` | junto con otro: `dev,gmail` o `prod,gmail` | `application-gmail.yml`: todos los correos (notificaciones a usuarios y soporte) salen por el SMTP de Gmail en lugar de Mailpit |
+
+### 6.1 Enviar los correos con Gmail
+
+Con el perfil `gmail`, una cuenta de Gmail envía **todos** los correos de `templates/correo`: verificación, bienvenida, recuperación de contraseña, aprobación o rechazo de organizadores, confirmación y cancelación de reservaciones (con el QR), cambios y cancelaciones de eventos, recordatorios y soporte. Esa misma cuenta (o la que indique `SIGER_SOPORTE_CORREO`) recibe cada solicitud de soporte; al responder ese correo, la respuesta llega a quien la reportó. El administrador también puede contestar desde **Soporte → Responder**: escribe el mensaje y SIGER lo envía con la plantilla `soporte_respuesta.html`, firmada por el «Equipo Soporte SIGER», y deja la solicitud en proceso o cerrada.
+
+1. En la cuenta de Gmail activa la **verificación en dos pasos** y crea una **contraseña de aplicación** en https://myaccount.google.com/apppasswords (16 caracteres). La contraseña normal no funciona.
+2. En `backend\siger`, copia `gmail.env.example` como `gmail.env` y completa `GMAIL_USUARIO` y `GMAIL_CONTRASENA`. `gmail.env` está en `.gitignore`: no se sube al repositorio.
+3. Inicia el backend con `.\iniciar-gmail.ps1` en lugar de `.\mvnw spring-boot:run`.
+
+En el servidor, define las mismas variables de entorno y `SPRING_PROFILES_ACTIVE=prod,gmail` (en ese caso no hacen falta `MAIL_HOST`, `MAIL_USUARIO` ni `MAIL_CONTRASENA`). Gmail permite unos 500 correos al día por cuenta.
 
 ## 7. Estructura
 

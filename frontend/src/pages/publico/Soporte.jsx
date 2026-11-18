@@ -49,7 +49,7 @@ export default function Soporte() {
         <span className="material-symbols-outlined mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-exito-container text-4xl text-exito" aria-hidden="true">task_alt</span>
         <h1 className="text-headline-md text-on-surface">Recibimos tu solicitud</h1>
         <p className="text-body-base text-on-surface-variant">
-          Tu número de seguimiento es <strong className="text-on-surface">#{creada.idSolicitud}</strong>. Te responderemos a <strong>{creada.correoContacto}</strong>.
+          Tu número de seguimiento es <strong className="text-on-surface">#{creada.idSolicitud}</strong>. Te enviamos una confirmación a <strong>{creada.correoContacto}</strong> y te responderemos a ese correo.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <Button variante="contorno" onClick={() => { setCreada(null); setDescripcion(''); }}>Reportar otro problema</Button>

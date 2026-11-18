@@ -27,6 +27,9 @@ siger:
   correo:
     remitente: SIGER <no-responder@siger.test>
     frontend-url: http://localhost:5173
+  # Buzón de soporte en desarrollo: los avisos de solicitudes nuevas llegan a Mailpit. Con el perfil gmail, a la cuenta real.
+  soporte:
+    correo: ${SIGER_SOPORTE_CORREO:soporte@siger.test}
   # Administrador inicial de desarrollo (DataInitializer). En prod: SIGER_ADMIN_CORREO y SIGER_ADMIN_CONTRASENA.
   admin:
     correo: ${SIGER_ADMIN_CORREO:admin@siger.test}

@@ -68,4 +68,30 @@ public class CorreoService {
             notificaciones.marcarFallida(idNotificacion);
         }
     }
+
+    /**
+     * Correo que no se registra en notificaciones (por ejemplo, los de soporte técnico, que pueden ser para alguien sin
+     * cuenta). «responderA» es opcional: al contestar el correo, la respuesta va a esa dirección.
+     */
+    @Async("correoExecutor")
+    public void enviarDirecto(String destino, String responderA, String asunto, String plantilla, Map<String, Object> modelo) {
+        try {
+            Context contexto = new Context(java.util.Locale.forLanguageTag("es"));
+            contexto.setVariables(modelo);
+            contexto.setVariable("frontendUrl", propiedades.frontendUrl());
+            contexto.setVariable("asunto", asunto);
+            MimeMessage mensaje = mailSender.createMimeMessage();
+            MimeMessageHelper ayudante = new MimeMessageHelper(mensaje, false, StandardCharsets.UTF_8.name());
+            ayudante.setFrom(propiedades.remitente());
+            ayudante.setTo(destino);
+            if (responderA != null && !responderA.isBlank()) {
+                ayudante.setReplyTo(responderA);
+            }
+            ayudante.setSubject("SIGER · " + asunto);
+            ayudante.setText(plantillas.process("correo/" + plantilla, contexto), true);
+            mailSender.send(mensaje);
+        } catch (MessagingException | RuntimeException e) {
+            log.warn("No se pudo enviar el correo «{}» a {}: {}", asunto, destino, e.getMessage());
+        }
+    }
 }
